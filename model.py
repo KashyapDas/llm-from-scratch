@@ -40,3 +40,8 @@ def decode(arr):
         result = result + idx_to_char[i]
     return result
 
+# Spliting the data - Training/Validating Data
+data = torch.tensor(encode(text), dtype=torch.long)
+n = int(0.9 * len(data))
+train_data = data[:n]
+val_data = data[n:]
