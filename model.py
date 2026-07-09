@@ -45,3 +45,23 @@ data = torch.tensor(encode(text), dtype=torch.long)
 n = int(0.9 * len(data))
 train_data = data[:n]
 val_data = data[n:]
+
+
+#Batching the data to the GPU
+def getBatch(split,batch_size, context_length):
+    d = train_data if split=="train" else val_data
+    ix = torch.randint(len(d)-context_length, (batch_size,))
+    x_list = []
+    y_list = []
+    for i in ix:
+        x_chunk = d[i:i+context_length]
+        y_chunk = d[i+1:i+1+context_length]
+        x_list.append(x_chunk)
+        y_list.append(y_chunk)
+    x = torch.stack(x_list)
+    y = torch.stack(y_list)
+    return x.to(device), y.to(device)
+
+input_shape, target_shape =getBatch("train",3,8)
+print(f"Input shape will be : {decode(input_shape[0].tolist())}")
+print(f"Output shape will be : {decode(target_shape[0].tolist())}")
