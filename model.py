@@ -17,3 +17,26 @@ if not os.path.exists("dataset.txt"):
 with open("dataSet.txt","r") as f:
     text = f.read()
 
+# Tokenization
+char = sorted(set(text))
+vocab_len = len(char)
+# Character to Integer Mapping
+char_to_idx = {}
+for i,c in enumerate(char):
+    char_to_idx[c] = i
+# Integer to Character Mapping
+idx_to_char = {}
+for i,c in enumerate(char):
+    idx_to_char[i] = c
+# Encode/Decode Function
+def encode(string):
+    result = []
+    for c in string:
+        result.append(char_to_idx[c])
+    return result
+def decode(arr):
+    result = ""
+    for i in arr:
+        result = result + idx_to_char[i]
+    return result
+
