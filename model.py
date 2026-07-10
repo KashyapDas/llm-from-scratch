@@ -13,7 +13,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Loading the dataset
 dataSet = "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt"
-if not os.path.exists("dataset.txt"):
+if not os.path.exists("dataSet.txt"):
     import urllib.request
     urllib.request.urlretrieve(dataSet,"dataSet.txt")
 with open("dataSet.txt","r") as f:
@@ -72,15 +72,11 @@ input_shape, target_shape =getBatch("train",3,8)
 
 # RMS Normalization 
 DROPOUT = 0.2
-demo_x = torch.randn(2,4,8)
-norm = nn.RMSNorm(8, eps=1e-6)
+demo_x = torch.randn(2,4,8, device=device)
+norm = nn.RMSNorm(8, eps=1e-6).to(device)
 demo_out = norm(demo_x)
-# print(f"Input - {demo_x.mean():.3f} and {demo_x.std():.3f}")
-# print(f"Output - {demo_out.mean():.3f} and {demo_out.std():.3f}")
-# print(f"Input Range - {demo_x.min():.3f} and {demo_x.max():.3f}")
-# print(f"Output Range - {demo_out.min():.3f} and {demo_out.max():.3f}")
 
-# GQA (Group Query Attention)
+# Multi-Head Attention (MHA)
 mha = nn.MultiheadAttention(
     embed_dim=256,
     num_heads=8,
@@ -92,10 +88,16 @@ rope = RotaryEmbedding(dim=32)  # 266/8 = 32
 
 demo_in = torch.randn(2, 16, 256, device=device)
 
-# nn.MultiheadAttention hides Q and K internally,
 # so RoPE cannot be applied here.
 attn_output, attn_weights = mha(
     demo_in,
     demo_in,
     demo_in
+)
+
+# SwiGLU - Feed Forwarding Layer
+ffn = SwiGLU(
+    in_features=768,
+    hidden_features=3072,
+    out_features=768
 )
