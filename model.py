@@ -63,5 +63,19 @@ def getBatch(split,batch_size, context_length):
     return x.to(device), y.to(device)
 
 input_shape, target_shape =getBatch("train",3,8)
-print(f"Input shape will be : {decode(input_shape[0].tolist())}")
-print(f"Output shape will be : {decode(target_shape[0].tolist())}")
+# print(f"Input shape will be : {decode(input_shape[0].tolist())}")
+# print(f"Output shape will be : {decode(target_shape[0].tolist())}")
+
+
+# RMS Normalization 
+DROPOUT = 0.2
+demo_x = torch.randn(2,4,8)
+norm = nn.RMSNorm(8, eps=1e-6)
+demo_out = norm(demo_x)
+# print(f"Input - {demo_x.mean():.3f} and {demo_x.std():.3f}")
+# print(f"Output - {demo_out.mean():.3f} and {demo_out.std():.3f}")
+# print(f"Input Range - {demo_x.min():.3f} and {demo_x.max():.3f}")
+# print(f"Output Range - {demo_out.min():.3f} and {demo_out.max():.3f}")
+
+
+
