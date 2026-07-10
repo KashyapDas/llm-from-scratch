@@ -182,3 +182,62 @@ if __name__ == "__main__":
 
     print("Training complete!")
 
+# ==========================================
+# 4. Text Generation (Inference) - Testing the model
+# ==========================================
+
+@torch.no_grad() # Disable gradient tracking for faster inference
+def generate_text(model, prompt, max_new_tokens, temperature=0.8):
+    model.eval() # Set model to evaluation mode
+    
+    # 1. We need the text-to-integer (stoi) and integer-to-text (itos) mappings again
+    # (Assuming 'text' and 'chars' are available from the get_shakespeare_data function)
+    url = "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt"
+    raw_text = requests.get(url).text
+    chars = sorted(list(set(raw_text)))
+    stoi = {ch: i for i, ch in enumerate(chars)}
+    itos = {i: ch for i, ch in enumerate(chars)}
+    
+    # 2. Encode the input prompt
+    # If a character isn't in Shakespeare's vocab, default to a space to avoid crashing
+    context = torch.tensor([[stoi.get(c, stoi[' ']) for c in prompt]], dtype=torch.long).to(device)
+    
+    print(f"\n--- Generating text from prompt: '{prompt}' ---\n")
+    print(prompt, end="") # Print the prompt first
+    
+    # 3. Autoregressive generation loop
+    for _ in range(max_new_tokens):
+        # Crop context to the block_size (128) to prevent memory errors 
+        # The model can only "see" up to 128 tokens at a time
+        context_crop = context[:, -block_size:]
+        
+        # Forward pass to get predictions
+        logits, _ = model(context_crop)
+        
+        # Focus only on the predictions for the VERY LAST token in the sequence
+        # Shape becomes (Batch, Vocab_Size)
+        logits = logits[:, -1, :] 
+        
+        # Scale by temperature
+        # Temperature < 1.0 makes it more confident/safe. > 1.0 makes it wild/random.
+        logits = logits / temperature
+        
+        # Apply softmax to convert logits to probabilities
+        probs = F.softmax(logits, dim=-1)
+        
+        # Sample from the probability distribution
+        next_token = torch.multinomial(probs, num_samples=1)
+        
+        # Append the new token to the running context
+        context = torch.cat((context, next_token), dim=1)
+        
+        # Decode and print the new character immediately
+        next_char = itos[next_token.item()]
+        print(next_char, end="", flush=True)
+
+    print("\n\n--- Generation Complete ---")
+
+# --- Run the Generator ---
+# You can change the prompt to anything you like!
+starting_prompt = "Kashyap Jyoti Das "
+generate_text(model, prompt=starting_prompt, max_new_tokens=200, temperature=0.8)
