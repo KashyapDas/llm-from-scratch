@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import math
 import os
 import time
+from rotary_embedding_torch import RotaryEmbedding   # Use for ROPE (Positional Encoding)
+from xformers.ops import SwiGLU # Use for Feed Forwarding Layer
 
 # Assign the GPU if avalaible
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -39,6 +41,7 @@ def decode(arr):
     for i in arr:
         result = result + idx_to_char[i]
     return result
+
 
 # Spliting the data - Training/Validating Data
 data = torch.tensor(encode(text), dtype=torch.long)
@@ -77,5 +80,22 @@ demo_out = norm(demo_x)
 # print(f"Input Range - {demo_x.min():.3f} and {demo_x.max():.3f}")
 # print(f"Output Range - {demo_out.min():.3f} and {demo_out.max():.3f}")
 
+# GQA (Group Query Attention)
+mha = nn.MultiheadAttention(
+    embed_dim=256,
+    num_heads=8,
+    batch_first=True
+).to(device)
 
+# Built-in RoPE
+rope = RotaryEmbedding(dim=32)  # 266/8 = 32
 
+demo_in = torch.randn(2, 16, 256, device=device)
+
+# nn.MultiheadAttention hides Q and K internally,
+# so RoPE cannot be applied here.
+attn_output, attn_weights = mha(
+    demo_in,
+    demo_in,
+    demo_in
+)
